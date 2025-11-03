@@ -16,15 +16,25 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icons/*.png'],
       manifest: {
-        name: 'ECKHU PWA App',
+        name: 'ECKHU - 공동구매 플랫폼',
         short_name: 'ECKHU',
-        description: 'ECKHU Progressive Web Application',
-        theme_color: '#ffffff',
+        description: '쿠팡 상품을 쉽게 공유하고 공동구매하세요',
+        theme_color: '#F0E491',
         background_color: '#ffffff',
         display: 'standalone',
         start_url: '/',
         scope: '/',
         orientation: 'portrait',
+        share_target: {
+          action: '/add-product',
+          method: 'GET',
+          enctype: 'application/x-www-form-urlencoded',
+          params: {
+            title: 'title',
+            text: 'text',
+            url: 'url'
+          }
+        },
         icons: [
           {
             src: '/icons/icon-48x48.png',

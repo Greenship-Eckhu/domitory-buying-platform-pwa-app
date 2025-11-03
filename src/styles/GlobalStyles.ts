@@ -55,6 +55,51 @@ const GlobalStyles = createGlobalStyle`
         border-collapse: collapse;
         border-spacing: 0;
     }
+
+    /* 모바일 PWA를 위한 기본 설정 */
+    html {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #f5f5f5;
+    }
+
+    #root {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        position: relative;
+    }
+
+    * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+    }
+
+    input, textarea {
+        -webkit-user-select: text;
+        user-select: text;
+    }
+
+    ::-webkit-scrollbar {
+        display: none;
+    }
 `;
 
 export default GlobalStyles;
