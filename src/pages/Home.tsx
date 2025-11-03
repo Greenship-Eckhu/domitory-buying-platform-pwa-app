@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import {THEME} from "@/constants/theme.ts";
@@ -6,11 +7,34 @@ import Screen from "@/components/Screen.tsx";
 
 function Home() {
   const navigate = useNavigate();
+  const [url, setUrl] = useState('');
+  const [error, setError] = useState('');
 
-  const handleTestShare = () => {
-    // 테스트용: 쿠팡 상품 링크로 직접 이동
-    const testUrl = 'https://www.coupang.com/vp/products/123456'
-    navigate(`/add-product?url=${encodeURIComponent(testUrl)}`)
+  const handleAddProduct = () => {
+    setError('');
+
+    if (!url.trim()) {
+      setError('상품 URL을 입력해주세요');
+      return;
+    }
+
+    // 간단한 URL 유효성 검사
+    if (!url.includes('coupang.com')) {
+      setError('쿠팡 상품 링크만 입력 가능합니다');
+      return;
+    }
+
+    navigate(`/add-product?url=${encodeURIComponent(url.trim())}`);
+  }
+
+  const handlePaste = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      setUrl(text);
+      setError('');
+    } catch (err) {
+      setError('클립보드 읽기 권한이 필요합니다');
+    }
   }
 
   return (
@@ -19,27 +43,54 @@ function Home() {
         <WelcomeContainer>
           <Title>ECKHU</Title>
           <Subtitle>공동구매 플랫폼</Subtitle>
-          <TestButton onClick={handleTestShare}>
-            상품 추가 테스트
-          </TestButton>
         </WelcomeContainer>
       </TopSection>
       <InfoContainer>
+        <InfoTitle>상품 추가하기</InfoTitle>
+
+        <InputSection>
+          <InputWrapper>
+            <UrlInput
+              type="text"
+              placeholder="쿠팡 상품 링크를 붙여넣으세요"
+              value={url}
+              onChange={(e) => {
+                setUrl(e.target.value);
+                setError('');
+              }}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  handleAddProduct();
+                }
+              }}
+            />
+            <PasteButton onClick={handlePaste}>
+              📋 붙여넣기
+            </PasteButton>
+          </InputWrapper>
+          {error && <ErrorMessage>{error}</ErrorMessage>}
+          <AddButton onClick={handleAddProduct}>
+            상품 추가하기
+          </AddButton>
+        </InputSection>
+
+        <Divider />
+
         <InfoTitle>사용 방법</InfoTitle>
         <InfoCard>
           <InfoStep>1️⃣</InfoStep>
-          <InfoText>쿠팡에서 원하는 상품을 찾으세요</InfoText>
+          <InfoText>쿠팡 앱/웹에서 원하는 상품을 찾으세요</InfoText>
         </InfoCard>
         <InfoCard>
           <InfoStep>2️⃣</InfoStep>
-          <InfoText>공유 버튼을 눌러 ECKHU로 공유하세요</InfoText>
+          <InfoText>상품 링크를 복사하세요</InfoText>
         </InfoCard>
         <InfoCard>
           <InfoStep>3️⃣</InfoStep>
-          <InfoText>자동으로 상품 정보가 추가됩니다!</InfoText>
+          <InfoText>위 입력창에 붙여넣고 "상품 추가하기" 버튼을 누르세요</InfoText>
         </InfoCard>
         <InfoNote>
-          💡 쿠팡 상품 정보를 자동으로 파싱하여 상품명, 이미지, 가격, 수량을 추출합니다.
+          💡 상품명, 이미지, 가격, 수량 정보를 자동으로 추출합니다.
         </InfoNote>
       </InfoContainer>
     </Screen>
@@ -76,15 +127,67 @@ const Subtitle = styled.p`
     margin: 0;
 `
 
-const TestButton = styled.button`
-    margin-top: 16px;
-    padding: 12px 24px;
+const InputSection = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 24px;
+`
+
+const InputWrapper = styled.div`
+    display: flex;
+    gap: 8px;
+`
+
+const UrlInput = styled.input`
+    flex: 1;
+    padding: 14px 16px;
     font-size: 14px;
+    border: 2px solid ${THEME.colors.theme2};
+    border-radius: 12px;
+    outline: none;
+    transition: border-color 0.2s;
+
+    &:focus {
+        border-color: ${THEME.colors.theme3};
+    }
+
+    &::placeholder {
+        color: #999;
+    }
+`
+
+const PasteButton = styled.button`
+    padding: 14px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    background-color: ${THEME.colors.theme2};
+    color: ${THEME.colors.theme4};
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+
+    &:hover {
+        background-color: ${THEME.colors.theme3};
+        color: white;
+    }
+
+    &:active {
+        transform: scale(0.98);
+    }
+`
+
+const AddButton = styled.button`
+    width: 100%;
+    padding: 16px;
+    font-size: 16px;
     font-weight: 600;
     background-color: ${THEME.colors.theme3};
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: 12px;
     cursor: pointer;
     transition: all 0.2s;
 
@@ -95,6 +198,19 @@ const TestButton = styled.button`
     &:active {
         transform: scale(0.98);
     }
+`
+
+const ErrorMessage = styled.p`
+    color: #ff4444;
+    font-size: 13px;
+    margin: 0;
+    padding: 0 4px;
+`
+
+const Divider = styled.div`
+    height: 1px;
+    background-color: #e0e0e0;
+    margin: 24px 0;
 `
 
 const InfoContainer = styled(ScrollView)`

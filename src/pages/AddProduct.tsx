@@ -5,7 +5,7 @@ import Screen from '@/components/Screen'
 import ScrollView from '@/components/ScrollView'
 import { extractProductInfo } from '@/services/productService'
 import { detectPlatform, normalizeUrl, isValidProductUrl } from '@/utils/urlParser'
-import { parseQuantityFromText, formatQuantity } from '@/utils/quantityParser'
+import { parseQuantityFromText } from '@/utils/quantityParser'
 import { Product } from '@/types/product'
 import { THEME } from '@/constants/theme'
 
@@ -27,9 +27,7 @@ function AddProduct() {
     platform: 'unknown'
   })
 
-  // 폼 상태
-  const [showQuantityInput, setShowQuantityInput] = useState(false)
-  const [showPriceInput, setShowPriceInput] = useState(false)
+  // 폼 상태 (항상 입력 가능하도록 변경)
 
   useEffect(() => {
     const initProduct = async () => {
@@ -78,14 +76,21 @@ function AddProduct() {
           platform
         })
 
-        // 수량 또는 가격이 없으면 입력창 표시
-        setShowQuantityInput(!parsedQuantity)
-        setShowPriceInput(!hasPrice)
-
         setLoading(false)
       } catch (err) {
         console.error('Failed to init product:', err)
-        setError(err instanceof Error ? err.message : '상품 정보를 불러오는데 실패했습니다.')
+        // 파싱 실패 시 수동 입력 모드로 전환
+        const sharedUrl = searchParams.get('url') || searchParams.get('text') || ''
+        setProduct({
+          name: '',
+          thumbnail: '',
+          price: undefined,
+          quantity: '',
+          unit: '',
+          originalUrl: sharedUrl,
+          platform: detectPlatform(sharedUrl)
+        })
+        setError('자동 파싱에 실패했습니다. 상품 정보를 직접 입력해주세요.')
         setLoading(false)
       }
     }
@@ -97,17 +102,17 @@ function AddProduct() {
     e.preventDefault()
 
     // 유효성 검사
-    if (!product.name || !product.thumbnail) {
-      alert('상품 정보가 올바르지 않습니다.')
+    if (!product.name) {
+      alert('상품명을 입력해주세요.')
       return
     }
 
-    if (showPriceInput && !product.price) {
+    if (!product.price) {
       alert('가격을 입력해주세요.')
       return
     }
 
-    if (showQuantityInput && (!product.quantity || !product.unit)) {
+    if (!product.quantity || !product.unit) {
       alert('수량과 단위를 입력해주세요.')
       return
     }
@@ -134,91 +139,85 @@ function AddProduct() {
     )
   }
 
-  if (error) {
-    return (
-      <Screen title="상품 추가" showBackButton>
-        <ErrorContainer>
-          <ErrorIcon>⚠️</ErrorIcon>
-          <ErrorText>{error}</ErrorText>
-          <RetryButton onClick={handleCancel}>돌아가기</RetryButton>
-        </ErrorContainer>
-      </Screen>
-    )
-  }
+  // error는 경고 메시지로만 표시하고 폼은 계속 보여줌
 
   return (
     <Screen title="상품 추가" showBackButton>
       <FormContainer>
         <Form onSubmit={handleSubmit}>
-          {/* 상품 미리보기 */}
-          <PreviewSection>
-            <ThumbnailContainer>
-              <Thumbnail src={product.thumbnail} alt={product.name} />
-            </ThumbnailContainer>
-            <ProductInfo>
-              <ProductName>{product.name}</ProductName>
-              <PlatformBadge $platform={product.platform || 'unknown'}>
-                {product.platform === 'coupang' ? '쿠팡' : '기타'}
-              </PlatformBadge>
-            </ProductInfo>
-          </PreviewSection>
+          {/* 에러/경고 메시지 */}
+          {error && (
+            <WarningBanner>
+              ⚠️ {error}
+            </WarningBanner>
+          )}
+
+          {/* 상품명 입력 */}
+          <FormGroup>
+            <Label>
+              상품명 <Required>*</Required>
+            </Label>
+            <Input
+              type="text"
+              placeholder="상품명을 입력하세요"
+              value={product.name || ''}
+              onChange={(e) => setProduct({ ...product, name: e.target.value })}
+              required
+            />
+          </FormGroup>
+
+          {/* 이미지 URL 입력 */}
+          <FormGroup>
+            <Label>이미지 URL</Label>
+            <Input
+              type="text"
+              placeholder="이미지 URL (선택사항)"
+              value={product.thumbnail || ''}
+              onChange={(e) => setProduct({ ...product, thumbnail: e.target.value })}
+            />
+            {product.thumbnail && (
+              <ThumbnailPreview>
+                <Thumbnail src={product.thumbnail} alt={product.name} />
+              </ThumbnailPreview>
+            )}
+          </FormGroup>
 
           {/* 가격 입력 */}
-          {showPriceInput ? (
-            <FormGroup>
-              <Label>
-                가격 <Required>*</Required>
-              </Label>
-              <Input
-                type="number"
-                placeholder="가격을 입력하세요"
-                value={product.price || ''}
-                onChange={(e) => setProduct({ ...product, price: Number(e.target.value) })}
-                required
-              />
-              <HelperText>가격 정보를 찾을 수 없어 직접 입력이 필요합니다.</HelperText>
-            </FormGroup>
-          ) : (
-            <FormGroup>
-              <Label>가격</Label>
-              <PriceDisplay>{product.price?.toLocaleString()}원</PriceDisplay>
-            </FormGroup>
-          )}
+          <FormGroup>
+            <Label>
+              가격 <Required>*</Required>
+            </Label>
+            <Input
+              type="number"
+              placeholder="가격을 입력하세요"
+              value={product.price || ''}
+              onChange={(e) => setProduct({ ...product, price: Number(e.target.value) })}
+              required
+            />
+          </FormGroup>
 
           {/* 수량 입력 */}
-          {showQuantityInput ? (
-            <FormGroup>
-              <Label>
-                수량 정보 <Required>*</Required>
-              </Label>
-              <QuantityInputGroup>
-                <Input
-                  type="number"
-                  placeholder="수량"
-                  value={product.quantity || ''}
-                  onChange={(e) => setProduct({ ...product, quantity: e.target.value })}
-                  required
-                />
-                <Input
-                  type="text"
-                  placeholder="단위 (예: 개, kg, ml)"
-                  value={product.unit || ''}
-                  onChange={(e) => setProduct({ ...product, unit: e.target.value })}
-                  required
-                />
-              </QuantityInputGroup>
-              <HelperText>수량 정보를 찾을 수 없어 직접 입력이 필요합니다.</HelperText>
-            </FormGroup>
-          ) : (
-            <FormGroup>
-              <Label>수량</Label>
-              <PriceDisplay>
-                {product.quantity && product.unit
-                  ? formatQuantity(Number(product.quantity), product.unit)
-                  : '수량 정보 없음'}
-              </PriceDisplay>
-            </FormGroup>
-          )}
+          <FormGroup>
+            <Label>
+              수량 정보 <Required>*</Required>
+            </Label>
+            <QuantityInputGroup>
+              <Input
+                type="number"
+                placeholder="수량"
+                value={product.quantity || ''}
+                onChange={(e) => setProduct({ ...product, quantity: e.target.value })}
+                required
+              />
+              <Input
+                type="text"
+                placeholder="단위 (예: 개, kg, ml)"
+                value={product.unit || ''}
+                onChange={(e) => setProduct({ ...product, unit: e.target.value })}
+                required
+              />
+            </QuantityInputGroup>
+          </FormGroup>
 
           {/* 버튼 */}
           <ButtonGroup>
@@ -232,6 +231,26 @@ function AddProduct() {
     </Screen>
   )
 }
+
+const WarningBanner = styled.div`
+  padding: 12px 16px;
+  background-color: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  color: #856404;
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 16px;
+`
+
+const ThumbnailPreview = styled.div`
+  margin-top: 12px;
+  width: 120px;
+  height: 120px;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #f0f0f0;
+`
 
 const FormContainer = styled(ScrollView)`
   padding: 20px;

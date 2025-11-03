@@ -19,11 +19,28 @@ interface ProductJsonLd {
 }
 
 /**
- * CORS 프록시를 사용하여 HTML 가져오기
- * 브라우저의 CORS 제한을 우회하기 위해 프록시 사용
+ * HTML 가져오기
+ * 1순위: 자체 Vercel API (배포 환경)
+ * 2순위: CORS 프록시 (외부 서비스)
+ * 3순위: 직접 요청 (CORS 에러 가능)
  */
 async function fetchWithProxy(url: string): Promise<string> {
-  // CORS 프록시 옵션들
+  // 1. 자체 API 사용 (배포 환경에서 /api/fetch-product 사용)
+  try {
+    const apiUrl = `/api/fetch-product?url=${encodeURIComponent(url)}`
+    console.log('Trying API:', apiUrl)
+
+    const response = await fetch(apiUrl)
+    if (response.ok) {
+      const html = await response.text()
+      console.log('✅ Fetched via API successfully')
+      return html
+    }
+  } catch (error) {
+    console.warn('⚠️ API fetch failed, trying fallback proxies:', error)
+  }
+
+  // 2. CORS 프록시 옵션들 (fallback)
   const proxies = [
     `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
     `https://corsproxy.io/?${encodeURIComponent(url)}`,
@@ -39,6 +56,7 @@ async function fetchWithProxy(url: string): Promise<string> {
       })
 
       if (response.ok) {
+        console.log('✅ Fetched via proxy:', proxyUrl)
         return await response.text()
       }
     } catch (error) {
@@ -47,7 +65,8 @@ async function fetchWithProxy(url: string): Promise<string> {
     }
   }
 
-  // 프록시 실패 시 직접 시도 (CORS 에러 발생 가능)
+  // 3. 프록시 실패 시 직접 시도 (CORS 에러 발생 가능)
+  console.log('Trying direct fetch...')
   const response = await fetch(url)
   return await response.text()
 }
