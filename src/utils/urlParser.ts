@@ -55,6 +55,10 @@ export function isValidProductUrl(url: string): boolean {
 
     // 쿠팡 상품 URL 검증
     if (hostname.includes('coupang.com')) {
+      // 짧은 링크 (link.coupang.com) 허용
+      if (hostname.includes('link.coupang.com')) {
+        return true
+      }
       // /vp/products/ 또는 /products/ 경로 확인
       return urlObj.pathname.includes('/products/') || urlObj.searchParams.has('itemId')
     }
