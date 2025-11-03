@@ -1,11 +1,9 @@
-import React from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import BottomNavigation from './components/BottomNavigation'
-import Home from './pages/Home'
-import Search from './pages/Search'
-import Favorites from './pages/Favorites'
-import Profile from './pages/Profile'
-import './App.css'
+import BottomNavigation from '@/components/BottomNavigation'
+import Home from '@/pages/Home'
+import Search from '@/pages/Search'
+import Favorites from '@/pages/Favorites'
+import Profile from '@/pages/Profile'
 
 function App() {
   return (

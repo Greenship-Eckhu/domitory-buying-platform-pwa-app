@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import './BottomNavigation.css'
+import '@/components/BottomNavigation.css'
 
 function BottomNavigation() {
   const location = useLocation()

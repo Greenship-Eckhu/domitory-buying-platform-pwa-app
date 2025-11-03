@@ -1,5 +1,3 @@
-import React from 'react'
-
 function Profile() {
   return (
     <div style={{ padding: '20px' }}>

@@ -1,5 +1,3 @@
-import React from 'react'
-
 function Search() {
   return (
     <div style={{ padding: '20px' }}>
